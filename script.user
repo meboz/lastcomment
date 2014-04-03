@@ -1,0 +1,53 @@
+// ==UserScript==
+// @name       My Fancy New Userscript
+// @namespace  http://use.i.E.your.homepage/
+// @version    0.1
+// @description  enter something useful
+// @match      http://jira.ao.local/secure/RapidBoard.jspa*
+// @copyright  2012+, You
+// @require http://code.jquery.com/jquery-latest.js
+// @require cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js
+// ==/UserScript==
+
+
+    setInterval(function(){
+		var issues = $('li .ghx-issue');    
+        
+        
+        _.each(issues,function(i){
+        	var id = $(i).attr('data-issue-id');
+            var url = 'http://jira.ao.local/rest/api/2/issue/' + id;
+            
+            $.ajax({
+                type:  'GET',
+                url:	url,
+                success: function(response){
+                    console.log(response)
+                    var comments = response.fields.comment.comments;
+                	if(comments.length == 0)
+                        return;
+                    
+                    var latestComment = comments[comments.length - 1];
+                    var commentedAgo = new Date() - new Date(latestComment.updated);
+                    
+                    var timeLeft = 24 - commentedAgo / 1000 / 60 / 60
+                    
+                    var color = 'green';
+                    
+                    if(timeLeft < 8)
+                    	color = 'red';
+                    
+                    var message = $('<span>')
+                    	.addClass('_sla')
+                    .css({float:'right',color:color,'font-weight':'bold','font-size':'110%'});
+                    message.text(timeLeft.toFixed(2) + ' hrs');
+                    
+                    
+                    $('._sla',$(i)).remove();
+                    $('.ghx-issue-fields',$(i)).append(message);
+                }
+            });
+            
+            
+        });
+    },5000);    
